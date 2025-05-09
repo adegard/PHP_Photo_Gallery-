@@ -1,4 +1,4 @@
-# PHP_Photo_Gallery
+# PHP_Photo_Gallery (Work in Progress, many bugs!)
 Basic photo gallery for Home server - no database
 
 ✅ Gallery visualization script (handles displaying images and browsing). 
