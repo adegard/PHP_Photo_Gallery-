@@ -24,8 +24,8 @@ Require PHP and Apache
 
 ✅ Set the cron job to run nightly at 3 AM:
 
-bash
-crontab -e
+`crontab -e`
+
 Add:
 
-0 3 * * * /usr/bin/php /path/to/generate_thumbnails.php
+`0 3 * * * /usr/bin/php /path/to/generate_thumbnails.php`
