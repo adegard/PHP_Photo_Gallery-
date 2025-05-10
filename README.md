@@ -1,10 +1,12 @@
-# PHP_Photo_Gallery (Work in Progress, many bugs!)
+# PHP_Photo_Gallery 
 Basic photo gallery for Home server - no database
 
-✅ Gallery visualization script (handles displaying images and browsing). 
-✅ Cron job script (runs nightly to generate thumbnails). 
-✅ Supports two-level folder scanning (images/YYYY/MM). 
-✅ Optimized performance, usability, and smooth navigation.
+- Gallery visualization script (handles displaying images and browsing). 
+- Cron job script (runs nightly to generate thumbnails). 
+- Supports two-level folder scanning (images/YYYY/MM). 
+- Optimized performance, usability, and smooth navigation.
+
+![Screenshot](/repository/assets/screen.png?raw=true "Screenshot")
 
 I'll now write the full PHP scripts for:
 
