@@ -4,7 +4,7 @@ Basic photo gallery for Home server - no database
 - Gallery visualization script (handles displaying images and browsing). 
 - Cron job script (runs nightly to generate thumbnails). 
 - Supports two-level folder scanning (images/YYYY/MM). 
-- Optimized performance, usability, and smooth navigation.
+- Optimized performance, usability, and smooth navigation, thanks to progressive Thumbnails loading when scroll down
 - Responsive to be use on small screens
 
 ![Screenshot](screen.jpg?raw=true "Screenshot")
@@ -19,10 +19,10 @@ I'll now write the full PHP scripts for:
 
 Require PHP and Apache
 
-- 1. Place these scripts in your web server (/var/www).
-- 2. Place your images inside a sub-folder named "images"
-- 3. Set up cron jobs for thumbnail generation and cleanup at night.
-- 4. Open index.php in a browser to view and manage images! 🎉
+1. Place these scripts in your web server (/var/www).
+2. Place your images inside a sub-folder named "images"
+3. Set up cron jobs for thumbnail generation and cleanup at night.
+4. Open index.php in a browser to view and manage images! 🎉
 
 🛠 Thumbnail Generator (generate_thumbnails.php)
 
