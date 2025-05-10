@@ -20,7 +20,7 @@ The full PHP scripts are made for:
 Require PHP and Apache
 
 1. Place these scripts in your web server (/var/www).
-2. Place your images with any sub-folder structure you want (eg. YYYY/MM ...) inside a sub-folder named "images"
+2. Place your images with any sub-folder structure you want (eg. YYYY/MM ...) inside a sub-folder "/var/www/images" (or use a symlink in linux to your existing photo folder)
 3. First time scanning: `php /var/www/generate_thumbnails.php >> /var/www/log.txt 2>&1.` (background process to not overload cpu)
 4. Open index.php in a browser to view and manage images! 🎉
 
