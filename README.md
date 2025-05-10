@@ -6,7 +6,7 @@ Basic photo gallery for Home server - no database
 - Supports two-level folder scanning (images/YYYY/MM). 
 - Optimized performance, usability, and smooth navigation.
 
-![Screenshot](/repository/assets/screen.png?raw=true "Screenshot")
+![Screenshot](/repository/assets/screen.jpg?raw=true "Screenshot")
 
 I'll now write the full PHP scripts for:
 
