@@ -18,11 +18,12 @@ I'll now write the full PHP scripts for:
 
 Require PHP and Apache
 
-- 1️⃣ Place these scripts in your web server (/var/www/html).
-- 2️⃣ Set up cron jobs for thumbnail generation and cleanup at night.
-- 3️⃣ Open index.php in a browser to view and manage images! 🎉
+- 1. Place these scripts in your web server (/var/www).
+- 2. Place your images inside a sub-folder named "images"
+- 3. Set up cron jobs for thumbnail generation and cleanup at night.
+- 4. Open index.php in a browser to view and manage images! 🎉
 
-🛠 2. Thumbnail Generator (generate_thumbnails.php)
+🛠 Thumbnail Generator (generate_thumbnails.php)
 
 ✅ Set the cron job to run nightly at 3 AM:
 
