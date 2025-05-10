@@ -33,3 +33,16 @@ Require PHP and Apache
 Add:
 
 `0 2 * * * php /var/www/generate_thumbnails.php >> /var/www/log.txt 2>&1`
+
+## Common issues:
+
+Verify your server has write permissions to photos folders
+
+`ls -l /path/to/images` 
+
+if not, give access to user:group  
+
+`sudo chown -R www-data:www-data /path/to/images` 
+
+
+This program is in low-development. If some bugs appear, please open an issue.
