@@ -64,7 +64,7 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { font-family: Arial, sans-serif; display: flex; margin: 0; }
-        .sidebar { width: 200px; height: 100vh; background: #333; color: white; padding: 15px; overflow-y: auto; position: fixed; left: 0; top: 0; transition: all 0.3s; }
+        .sidebar { width: 90px; height: 100vh; background: #333; color: white; padding: 15px; overflow-y: auto; position: fixed; left: 0; top: 0; transition: all 0.3s; }
         .sidebar.hidden { left: -220px; } /* Collapsed State */
         .toggle-sidebar { position: fixed; top: 10px; left: 220px; background: #007bff; color: white; padding: 10px; cursor: pointer; border: none; }
         .year { cursor: pointer; padding: 10px; background: #444; margin: 5px; border-radius: 5px; }
@@ -85,8 +85,20 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
         .fullscreen-container img { max-width: 90vw; max-height: 90vh; }
         .close-btn, .delete-btn, .undo-btn { position: absolute; font-size: 18px; padding: 10px; cursor: pointer; border: none; border-radius: 5px; }
         .close-btn { top: 20px; right: 30px; background: red; color: white; }
-        .delete-btn { top: 20px; left: 20px; background: darkred; color: white; }
-        .undo-btn { bottom: 20px; left: 50%; transform: translateX(-50%); background: green; color: white; display: none; }
+
+        .delete-btn {
+			position: absolute;
+			top: 20px;
+			left: 20px;
+			background: red;
+			color: white;
+			padding: 10px 15px;
+			font-size: 18px;
+			cursor: pointer;
+			border: none;
+			border-radius: 5px;
+		}
+
     </style>
 </head>
 <body>
@@ -126,11 +138,14 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 
     <!-- Fullscreen View -->
     <div class="fullscreen-container" id="fullscreen">
+		<button class="delete-btn" onclick="deleteImage()">🗑 Delete</button>
         <img id="full-image">
         <button class="close-btn" onclick="closeFullscreen()">X</button>
     </div>
 
 <script>
+	    let images = Array.from(document.querySelectorAll('.gallery img'));
+        let currentIndex = 0;
 
 		function toggleAccordion(year) {
             let months = document.getElementById("months-" + year);
@@ -190,6 +205,57 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 				})
 				.catch(error => console.error("Error loading images:", error));
 		}
+				
+		function deleteImage() {
+			let fullImageElement = document.getElementById('full-image');
+
+			if (!fullImageElement || !fullImageElement.src) {
+				alert("Error: No image is selected for deletion!");
+				return;
+			}
+
+			// Define imageSrc **before** using it
+			let imageSrc = fullImageElement.src;
+
+			// Normalize path to match `data-original`
+			let normalizedImageSrc = imageSrc.replace("http://dietpi", "");
+
+			console.log("Trying to delete image:", normalizedImageSrc);
+
+			let thumbnailElement = Array.from(document.querySelectorAll('.gallery img'))
+				.find(img => img.getAttribute("data-original") === normalizedImageSrc);
+
+			if (!thumbnailElement) {
+				console.error("Thumbnail not found! Available images:");
+				document.querySelectorAll('.gallery img').forEach(img => console.log(img.getAttribute("data-original")));
+
+				alert("Error: Unable to find the thumbnail!");
+				return;
+			}
+
+			let thumbnailSrc = thumbnailElement.getAttribute("src");
+
+			console.log("Found thumbnail:", thumbnailSrc);
+
+			fetch("delete_image.php", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ original: normalizedImageSrc, thumbnail: thumbnailSrc })
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					thumbnailElement.parentNode.removeChild(thumbnailElement);
+					closeFullscreen();
+				} else {
+					alert("Error deleting image! Please refresh the page.");
+				}
+			})
+			.catch(error => console.error("Error:", error));
+		}
+
+
+
 		        
 		window.addEventListener("scroll", () => {
             if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 50) {

@@ -1,36 +1,38 @@
 <?php
-header('Content-Type: application/json');
-error_log("Received request to delete.");
-error_log("Original Path: " . $original);
-error_log("Thumbnail Path: " . $thumbnail);
-
+header("Content-Type: application/json");
 
 $data = json_decode(file_get_contents("php://input"), true);
-$original = realpath($_SERVER['DOCUMENT_ROOT'] . $data['original']);
-$thumbnail = realpath($_SERVER['DOCUMENT_ROOT'] . $data['thumbnail']);
+$original = $data["original"] ?? "";
+$thumbnail = $data["thumbnail"] ?? "";
 
-$response = ["success" => false];
+// Debugging: Log received data
+error_log("Request received: " . json_encode($data));
+error_log("Original file path: " . $originalPath);
+error_log("Thumbnail file path: " . $thumbnailPath);
 
-// Check if files exist and delete them
-/*
-if (file_exists($original) && file_exists($thumbnail)) {
-    unlink($original); // Delete original
-    unlink($thumbnail); // Delete thumbnail
-    $response["success"] = true;
+
+if (!$original || !$thumbnail) {
+    echo json_encode(["success" => false, "message" => "Invalid image paths"]);
+    exit;
 }
-*/
 
-if (file_exists($original)) {
-    unlink($original);
+// Convert URL paths back to real file system paths
+$originalPath = realpath($_SERVER['DOCUMENT_ROOT'] . $original);
+$thumbnailPath = realpath($_SERVER['DOCUMENT_ROOT'] . $thumbnail);
+
+// Debugging: Log resolved paths
+error_log("Resolved Original Path: " . $originalPath);
+error_log("Resolved Thumbnail Path: " . $thumbnailPath);
+
+$deletedOriginal = file_exists($originalPath) ? unlink($originalPath) : false;
+$deletedThumbnail = file_exists($thumbnailPath) ? unlink($thumbnailPath) : false;
+
+if ($deletedOriginal || $deletedThumbnail) {
+    echo json_encode(["success" => true]);
 } else {
-    error_log("Original file not found: " . $original);
+    error_log("Failed to delete files");
+    echo json_encode(["success" => false, "message" => "Failed to delete files"]);
 }
 
-if (file_exists($thumbnail)) {
-    unlink($thumbnail);
-} else {
-    error_log("Thumbnail file not found: " . $thumbnail);
-}
 
-echo json_encode($response);
 ?>
