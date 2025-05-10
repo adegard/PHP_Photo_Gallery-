@@ -64,13 +64,13 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { font-family: Arial, sans-serif; display: flex; margin: 0; }
-        .sidebar { width: 90px; height: 100vh; background: #333; color: white; padding: 15px; overflow-y: auto; position: fixed; left: 0; top: 0; transition: all 0.3s; }
+        .sidebar { width: 90px; height: 100vh; background: #333; color: white; padding: 5px; overflow-y: auto; position: fixed; left: 0; top: 0; transition: all 0.3s; }
         .sidebar.hidden { left: -220px; } /* Collapsed State */
-        .toggle-sidebar { position: fixed; top: 10px; left: 220px; background: #007bff; color: white; padding: 10px; cursor: pointer; border: none; }
+        .toggle-sidebar { position: fixed; top: 10px; left: 70px; background: #007bff; color: white; padding: 10px; cursor: pointer; border: none; }
         .year { cursor: pointer; padding: 10px; background: #444; margin: 5px; border-radius: 5px; }
         .months { display: none; padding-left: 15px; }
         .sidebar a { color: white; text-decoration: none; font-size: 16px; display: block; padding: 5px; }
-        .main-content { margin-left: 220px; padding: 20px; flex-grow: 1; transition: margin-left 0.3s; }
+        .main-content { margin-left: 120px; padding: 20px; flex-grow: 1; transition: margin-left 0.3s; }
         .main-content.expanded { margin-left: 10px; } /* Adjust when sidebar is hidden */
         .gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
         .gallery img { max-height: 150px; border-radius: 5px; cursor: pointer; transition: opacity 0.3s ease-in-out; }
