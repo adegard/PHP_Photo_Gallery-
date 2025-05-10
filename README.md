@@ -9,10 +9,10 @@ Basic photo gallery for Home server - no database
 
 ![Screenshot](screen.jpg?raw=true "Screenshot")
 
-I'll now write the full PHP scripts for:
+The full PHP scripts are made for:
 
-- Displaying images
-
+- Displaying images in low res. thumbnails
+- Open full screen in full res. with Delete button (both thumbnails and original)
 - Generating thumbnails via cron job
 
 ## Installation
