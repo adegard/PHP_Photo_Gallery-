@@ -35,7 +35,7 @@ function getImagesFromFolder($folder, $offset = 0, $limit = 40) {
 function getFolderStructure($folder) {
     $structure = [];
 
-    foreach (scandir($folder) as $subfolder) {
+    foreach (scandir($folder, SCANDIR_SORT_DESCENDING) as $subfolder) {
         $subfolderPath = realpath($folder . DIRECTORY_SEPARATOR . $subfolder);
         if (is_dir($subfolderPath) && $subfolder !== '.' && $subfolder !== '..' && $subfolder !== 'thumbnails') {
             $structure[$subfolder] = [];
@@ -163,6 +163,39 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
             fullscreenContainer.classList.remove("show");
             setTimeout(() => { fullscreenContainer.style.display = "none"; }, 500);
         }
+        
+        let offset = <?= $imagesPerLoad ?>;
+        let folder = "<?= htmlspecialchars($_GET['folder'] ?? 'images') ?>";
+        
+        function loadMoreImages() {
+			document.getElementById("loading").style.display = "block";
+
+			fetch(`load_images.php?folder=${encodeURIComponent(folder)}&offset=${offset}`)
+				.then(response => response.json())
+				.then(data => {
+					let gallery = document.getElementById("gallery");
+
+					data.forEach(image => {
+						if (image.thumbnail) {
+							let img = document.createElement("img");
+							img.src = image.thumbnail;
+							img.setAttribute("data-original", image.original);
+							img.onclick = () => openFullscreen(img);
+							gallery.appendChild(img);
+						}
+					});
+
+					offset += <?= $imagesPerLoad ?>;
+					document.getElementById("loading").style.display = "none";
+				})
+				.catch(error => console.error("Error loading images:", error));
+		}
+		        
+		window.addEventListener("scroll", () => {
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 50) {
+                loadMoreImages();
+            }
+        });
 </script>
 
 </body>
