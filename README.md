@@ -21,7 +21,7 @@ Require PHP and Apache
 
 1. Place these scripts in your web server (/var/www).
 2. Place your images inside a sub-folder named "images"
-3. Set up cron jobs for thumbnail generation and cleanup at night.
+3. First time scanning: `php /var/www/generate_thumbnails.php >> /var/www/log.txt 2>&1.` (background process to not overload cpu)
 4. Open index.php in a browser to view and manage images! 🎉
 
 🛠 Thumbnail Generator (generate_thumbnails.php)
@@ -32,4 +32,4 @@ Require PHP and Apache
 
 Add:
 
-`0 3 * * * /usr/bin/php /path/to/generate_thumbnails.php`
+`0 2 * * * php /var/www/generate_thumbnails.php >> /var/www/log.txt 2>&1`
