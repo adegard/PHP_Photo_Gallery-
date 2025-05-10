@@ -21,7 +21,7 @@ Require PHP and Apache
 
 1. Place these scripts in your web server (/var/www).
 2. Place your images with any sub-folder structure you want (eg. YYYY/MM ...) inside a sub-folder "/var/www/images" (or use a symlink in linux to your existing photo folder)
-3. First time scanning: `php /var/www/generate_thumbnails.php >> /var/www/log.txt 2>&1.` (background process to not overload cpu)
+3. First time scanning: `php /var/www/generate_thumbnails.php >> /var/www/log.txt 2>&1.` (background process to not overload cpu). This will create sub-folders "thumbnails" in every folders (up to 2nd level of images) with low-res pictures
 4. Open index.php in a browser to view and manage images! 🎉
 
 🛠 Thumbnail Generator (generate_thumbnails.php)
