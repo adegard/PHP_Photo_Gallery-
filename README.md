@@ -5,6 +5,7 @@ Basic photo gallery for Home server - no database
 - Cron job script (runs nightly to generate thumbnails). 
 - Supports two-level folder scanning (images/YYYY/MM). 
 - Optimized performance, usability, and smooth navigation.
+- Responsive to be use on small screens
 
 ![Screenshot](screen.jpg?raw=true "Screenshot")
 
