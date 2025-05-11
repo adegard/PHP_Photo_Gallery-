@@ -1,12 +1,22 @@
 <?php
 $mainFolder = realpath('images');
 
+if (!$mainFolder) {
+    die("Error: Images folder not found!\n");
+}
+
 function logMessage($message) {
     echo $message . PHP_EOL; // Print to CLI
 }
 
 // Recursive function to generate thumbnails up to 3 levels deep
 function generateThumbnailsRecursively($folder, $currentDepth = 1, $maxDepth = 3) {
+	
+	if (!$folder || !is_dir($folder)) {
+        logMessage("Error: Invalid folder path: " . $folder);
+        return;
+    }
+    
     if ($currentDepth > $maxDepth) return; // Stop recursion beyond 3 levels
 
     logMessage("Processing folder: " . $folder);

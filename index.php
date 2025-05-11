@@ -51,6 +51,73 @@ function getFolderStructure($folder) {
     return $structure;
 }
 
+# upload pictures
+$logFile = "log.txt"; // Debug log storage
+
+function writeLog($message) {
+    file_put_contents($GLOBALS['logFile'], date("[Y-m-d H:i:s] ") . $message . PHP_EOL, FILE_APPEND);
+}
+
+function uploadImage($baseFolder) {
+    if (!isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
+        return ['success' => false, 'error' => 'Error uploading image'];
+    }
+
+    // Extract the target folder from the request
+    $targetFolder = isset($_POST['targetFolder']) ? realpath($_POST['targetFolder']) : $baseFolder;
+
+    if (!$targetFolder || !is_dir($targetFolder)) {
+        return ['success' => false, 'error' => 'Invalid target folder'];
+    }
+
+    $imageFile = $_FILES['image'];
+    $imageName = basename($imageFile['name']);
+    $imagePath = $targetFolder . DIRECTORY_SEPARATOR . $imageName;
+
+    if (!move_uploaded_file($imageFile['tmp_name'], $imagePath)) {
+        return ['success' => false, 'error' => 'Failed to save image'];
+    }
+
+    // Ensure thumbnail folder exists
+    $thumbnailFolder = $targetFolder . DIRECTORY_SEPARATOR . 'thumbnails';
+    if (!is_dir($thumbnailFolder)) {
+        mkdir($thumbnailFolder, 0777, true);
+    }
+
+    createThumbnail($imagePath, $thumbnailFolder . DIRECTORY_SEPARATOR . $imageName);
+    return ['success' => true, 'image' => $imagePath];
+}
+
+
+function createThumbnail($imagePath, $thumbPath, $thumbWidth = 150) {
+    writeLog("Creating thumbnail for: " . $imagePath);
+
+    $sourceImage = imagecreatefromjpeg($imagePath);
+    if (!$sourceImage) {
+        writeLog("Error loading image for thumbnail creation.");
+        return;
+    }
+
+    $width = imagesx($sourceImage);
+    $height = imagesy($sourceImage);
+    $thumbHeight = ($thumbWidth / $width) * $height;
+    $thumbnail = imagecreatetruecolor($thumbWidth, $thumbHeight);
+    imagecopyresized($thumbnail, $sourceImage, 0, 0, 0, 0, $thumbWidth, $thumbHeight, $width, $height);
+    imagejpeg($thumbnail, $thumbPath);
+    imagedestroy($sourceImage);
+    imagedestroy($thumbnail);
+
+    writeLog("Thumbnail created successfully at: " . $thumbPath);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $uploadResult = uploadImage($mainFolder);
+    echo json_encode($uploadResult);
+    exit;
+}
+
+######
+
 $folderStructure = getFolderStructure($mainFolder);
 $currentFolder = isset($_GET['folder']) ? realpath($_GET['folder']) : $mainFolder;
 $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
@@ -66,7 +133,7 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
         body { font-family: Arial, sans-serif; display: flex; margin: 0; }
         .sidebar { width: 90px; height: 100vh; background: #333; color: white; padding: 5px; overflow-y: auto; position: fixed; left: 0; top: 0; transition: all 0.3s; }
         .sidebar.hidden { left: -220px; } /* Collapsed State */
-        .toggle-sidebar { position: fixed; top: 10px; left: 70px; background: #007bff; color: white; padding: 10px; cursor: pointer; border: none; }
+        .toggle-sidebar { position: fixed; top: 10px; left: 100px; background: #007bff; color: white; padding: 10px; cursor: pointer; border: none; }
         .year { cursor: pointer; padding: 10px; background: #444; margin: 5px; border-radius: 5px; }
         .months { display: none; padding-left: 15px; }
         .sidebar a { color: white; text-decoration: none; font-size: 16px; display: block; padding: 5px; }
@@ -105,6 +172,11 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 
     <!-- Collapsible Sidebar -->
     <div class="sidebar" id="sidebar">
+		<form id="uploadForm" enctype="multipart/form-data">
+			<input type="file" name="image" id="imageInput">
+			<button type="button" onclick="uploadPicture()">Upload Picture</button>
+		</form>
+
         <a href="?folder=<?= urlencode($mainFolder) ?>">All Years</a>
         <?php foreach ($folderStructure as $year => $months): ?>
             <div class="year" onclick="toggleAccordion('<?= $year ?>')"><?= htmlspecialchars($year) ?></div>
@@ -124,6 +196,9 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
     <!-- Main Content -->
     <div class="main-content" id="main-content">
         <h1>Image Gallery - <?= basename($currentFolder) ?></h1>
+        <!-- output for uploading ENABLE FOR DEBUGING
+    		<div id="logOutput" style="border: 1px solid #ccc; padding: 10px; max-height: 150px; overflow-y: auto;"></div>
+    	-->	
         <div class="gallery" id="gallery">
             <?php foreach ($initialImages as $image): ?>
                 <?php if ($image['thumbnail']): ?>
@@ -147,6 +222,51 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 	    let images = Array.from(document.querySelectorAll('.gallery img'));
         let currentIndex = 0;
 
+		////
+		
+        function uploadPicture() {
+			let formData = new FormData(document.getElementById('uploadForm'));
+			formData.append("targetFolder", "<?= htmlspecialchars($currentFolder) ?>"); // Sends correct folder
+
+			fetch('', {
+				method: 'POST',
+				body: formData
+			})
+			.then(response => response.json())
+			.then(data => {
+				console.log("Upload response:", data);
+
+				if (data.success) {
+					console.log("Image uploaded successfully:", data.image);
+					location.reload();
+				} else {
+					console.error("Upload error:", data.error);
+					alert("Error: " + data.error);
+				}
+			})
+			.catch(error => console.error("Upload failed:", error));
+		}
+
+
+        function displayLog(message) {
+            let logBox = document.getElementById('logOutput');
+            let logEntry = document.createElement('div');
+            logEntry.innerText = message;
+            logBox.appendChild(logEntry);
+        }
+
+        function fetchServerLogs() {
+            fetch('log.txt')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('logOutput').innerText = data;
+                });
+        }
+
+        setInterval(fetchServerLogs, 5000); // Update logs every 5 seconds
+        
+        /////
+		
 		function toggleAccordion(year) {
             let months = document.getElementById("months-" + year);
             months.style.display = months.style.display === "none" ? "block" : "none";
