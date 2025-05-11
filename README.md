@@ -45,4 +45,8 @@ if not, give access to user:group
 `sudo chown -R www-data:www-data /path/to/images` 
 
 
+## TODO:
+
+- integrate video thumbnails and play
+
 This program is in low-development. If some bugs appear, please open an issue.
