@@ -163,14 +163,16 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
             justify-content: center; align-items: center; opacity: 0; transition: opacity 0.5s ease-in-out;
         }
         .fullscreen-container.show { opacity: 1; }
-        
+				
 		.fullscreen-container img {
 			max-width: 90vw;
 			max-height: 90vh;
 			opacity: 0;
 			transition: opacity 0.5s ease-in-out;
-			will-change: opacity; /* Optimizes rendering for mobile browsers */
+			will-change: opacity; /* Optimized for mobile smooth rendering */
 		}
+
+
 
         .close-btn, .delete-btn, .undo-btn { position: absolute; font-size: 18px; padding: 10px; cursor: pointer; border: none; border-radius: 5px; }
         .close-btn { top: 20px; right: 30px; background: red; color: white; }
@@ -370,6 +372,7 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
             sidebar.classList.toggle("hidden");
             mainContent.classList.toggle("expanded");
         }
+
 		function openFullscreen(imageElement) {
 			let fullImage = document.getElementById('full-image');
 			let fullscreenContainer = document.getElementById('fullscreen');
@@ -379,25 +382,94 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 				return;
 			}
 
-			fullImage.src = ''; // Reset previous image
+			// Reset fullscreen container before loading a new image
 			fullscreenContainer.style.display = "flex";
 			fullscreenContainer.classList.add("show");
-
-			// First show the thumbnail with low opacity
-			fullImage.style.opacity = "0.2"; 
+			fullImage.src = ""; // Clear previous image
+			fullImage.style.opacity = "0"; // Reset fade effect
+			fullImage.style.width = "90vw"; // Ensure fullscreen size
+			// fullImage.style.height = "90vh";
+			
+			
+			// Load the thumbnail first
+			let thumbnailSrc = imageElement.src;
 			let originalSrc = imageElement.getAttribute("data-original");
 
-			setTimeout(() => {
-				fullImage.src = originalSrc;
+			fullImage.src = thumbnailSrc; // Start with thumbnail
+			fullImage.style.opacity = "1"; // Make sure it's fully visible
 
-				// Use `requestAnimationFrame` for better mobile rendering
-				requestAnimationFrame(() => {
-					fullImage.style.opacity = "1";
-				});
-			}, 200);
+			// Once the original image loads, fade into it
+			let tempImage = new Image();
+			tempImage.src = originalSrc;
+			tempImage.onload = () => {
+				setTimeout(() => {
+					fullImage.src = originalSrc; // Switch to original
+					fullImage.style.transition = "opacity 0.5s ease-in-out";
+					fullImage.style.opacity = "1"; // Apply fade effect
+				}, 200);
+			};
 		}
 
 
+/*
+		function openFullscreen(imageElement) {
+			let fullImage = document.getElementById('full-image');
+			let fullscreenContainer = document.getElementById('fullscreen');
+
+			if (!fullImage || !fullscreenContainer) {
+				console.error("Error: Fullscreen elements not found.");
+				return;
+			}
+			// Reset previous image and hide it before loading new one
+			fullImage.src = '';
+			fullImage.style.opacity = "0"; 
+			fullscreenContainer.style.display = "flex";
+			fullscreenContainer.classList.add("show");
+
+			// Show thumbnail first with full opacity
+			let thumbnailSrc = imageElement.src;
+			let originalSrc = imageElement.getAttribute("data-original");
+
+			fullImage.src = thumbnailSrc; // Set thumbnail first
+			fullImage.style.opacity = "1"; // Ensure the thumbnail is visible
+
+			// Fade-in effect after original image loads
+			fullImage.onload = () => {
+				setTimeout(() => {
+					fullImage.style.transition = "opacity 0.5s ease-in-out";
+					fullImage.src = originalSrc; // Replace with full image
+				}, 100); // Slight delay to smooth transition
+			};
+		}
+*/
+/*
+		function openFullscreen(imageElement) {
+			let fullImage = document.getElementById('full-image');
+			let fullscreenContainer = document.getElementById('fullscreen');
+
+			if (!fullImage || !fullscreenContainer) {
+				console.error("Error: Fullscreen elements not found.");
+				return;
+			}
+
+			// Reset previous image and hide it before loading new one
+			fullImage.src = '';
+			fullImage.style.opacity = "0"; 
+			fullscreenContainer.style.display = "flex";
+			fullscreenContainer.classList.add("show");
+
+			let originalSrc = imageElement.getAttribute("data-original");
+
+			// Load the new image and trigger fade effect on load
+			fullImage.onload = () => {
+				fullImage.style.transition = "opacity 0.5s ease-in-out";
+				fullImage.style.opacity = "1";
+			};
+			
+			fullImage.src = originalSrc; // Assign source AFTER setting onload handler
+		}
+
+*/
         function closeFullscreen() {
             let fullscreenContainer = document.getElementById('fullscreen');
             fullscreenContainer.classList.remove("show");
@@ -407,6 +479,33 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
         let offset = <?= $imagesPerLoad ?>;
         let folder = "<?= htmlspecialchars($_GET['folder'] ?? 'images') ?>";
         
+		function loadMoreImages() {
+			document.getElementById("loading").style.display = "block";
+
+			fetch(`load_images.php?folder=${encodeURIComponent(folder)}&offset=${offset}`)
+				.then(response => response.json())
+				.then(data => {
+					let gallery = document.getElementById("gallery");
+
+					data.forEach((image, index) => {
+						if (image.thumbnail) {
+							setTimeout(() => { // Staggered loading improves rendering
+								let img = document.createElement("img");
+								img.src = image.thumbnail;
+								img.setAttribute("data-original", image.original);
+								img.onclick = () => openFullscreen(img);
+								gallery.appendChild(img);
+							}, index * 50); // Adjust delay if needed
+						}
+					});
+
+					offset += <?= $imagesPerLoad ?>;
+					document.getElementById("loading").style.display = "none";
+				})
+				.catch(error => console.error("Error loading images:", error));
+		}
+
+/*
         function loadMoreImages() {
 			document.getElementById("loading").style.display = "block";
 
@@ -430,7 +529,7 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 				})
 				.catch(error => console.error("Error loading images:", error));
 		}
-				
+*/				
 		function deleteImage() {
 			let fullImageElement = document.getElementById('full-image');
 
