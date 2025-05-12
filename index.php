@@ -4,6 +4,7 @@ $imagesPerLoad = 40;
 $deletedImages = []; // Store deleted images temporarily for undo functionality
 
 // Function to fetch images from a folder
+
 function getImagesFromFolder($folder, $offset = 0, $limit = 40) {
     $images = [];
     $thumbFolder = $folder . DIRECTORY_SEPARATOR . 'thumbnails';
@@ -12,9 +13,11 @@ function getImagesFromFolder($folder, $offset = 0, $limit = 40) {
         return [];
     }
 
-    $files = array_filter(scandir($folder), function($file) use ($folder) {
-        return is_file($folder . DIRECTORY_SEPARATOR . $file) && preg_match('/\.(jpg|jpeg)$/i', $file);
-    });
+
+	$files = array_filter(scandir($folder), function($file) use ($folder) {
+		return is_file($folder . DIRECTORY_SEPARATOR . $file) && preg_match('/\.(jpg|jpeg|mp4)$/i', $file);
+	});
+
 
     $files = array_slice($files, $offset, $limit);
 
@@ -27,6 +30,7 @@ function getImagesFromFolder($folder, $offset = 0, $limit = 40) {
             'thumbnail' => file_exists($thumbPath) ? str_replace(realpath('images'), '/images', $thumbPath) : null
         ];
     }
+
 
     return $images;
 }
@@ -128,20 +132,30 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 <head>
     <meta charset="UTF-8">
     <title>Image Gallery</title>
+    <link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: Arial, sans-serif; display: flex; margin: 0; }
+        body { font-family: Arial, sans-serif; background: #333; display: flex; margin: 0; }
         .sidebar { width: 90px; height: 100vh; background: #333; color: white; padding: 5px; overflow-y: auto; position: fixed; left: 0; top: 0; transition: all 0.3s; }
         .sidebar.hidden { left: -220px; } /* Collapsed State */
-        .toggle-sidebar { position: fixed; top: 10px; left: 100px; background: #007bff; color: white; padding: 10px; cursor: pointer; border: none; }
+        .toggle-sidebar { position: fixed; top: 10px; left: 50px; background: #007bff; color: white; padding: 10px; cursor: pointer; border: none; }
         .year { cursor: pointer; padding: 10px; background: #444; margin: 5px; border-radius: 5px; }
         .months { display: none; padding-left: 15px; }
         .sidebar a { color: white; text-decoration: none; font-size: 16px; display: block; padding: 5px; }
-        .main-content { margin-left: 120px; padding: 20px; flex-grow: 1; transition: margin-left 0.3s; }
+        .main-content { margin-left: 70px; background: #333;  padding: 20px; flex-grow: 1; transition: margin-left 0.3s; }
         .main-content.expanded { margin-left: 10px; } /* Adjust when sidebar is hidden */
-        .gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-        .gallery img { max-height: 150px; border-radius: 5px; cursor: pointer; transition: opacity 0.3s ease-in-out; }
+        .gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
         .loading { display: none; text-align: center; margin-top: 20px; font-size: 18px; color: gray; }
+        
+        .gallery img {
+			max-height: 200px;
+			max-width: 100%;
+			object-fit: contain; /* Keeps aspect ratio without distortion */
+			border-radius: 5px;
+			cursor: pointer;
+			transition: opacity 0.3s ease-in-out;
+		}
+
 
         /* Fullscreen Image with Fade-In Effect */
         .fullscreen-container { 
@@ -149,7 +163,15 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
             justify-content: center; align-items: center; opacity: 0; transition: opacity 0.5s ease-in-out;
         }
         .fullscreen-container.show { opacity: 1; }
-        .fullscreen-container img { max-width: 90vw; max-height: 90vh; }
+        
+		.fullscreen-container img {
+			max-width: 90vw;
+			max-height: 90vh;
+			opacity: 0;
+			transition: opacity 0.5s ease-in-out;
+			will-change: opacity; /* Optimizes rendering for mobile browsers */
+		}
+
         .close-btn, .delete-btn, .undo-btn { position: absolute; font-size: 18px; padding: 10px; cursor: pointer; border: none; border-radius: 5px; }
         .close-btn { top: 20px; right: 30px; background: red; color: white; }
 
@@ -165,6 +187,35 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 			border: none;
 			border-radius: 5px;
 		}
+		
+		/* Video css */
+		.video-thumbnail {
+			position: relative;
+			display: inline-block;
+		}
+
+		.video-thumbnail img {
+			max-height: 150px;
+			border-radius: 5px;
+			cursor: pointer;
+		}
+
+		.play-icon {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: 50px;
+			height: 50px;
+			background: rgba(0, 0, 0, 0.7);
+			color: white;
+			font-size: 24px;
+			text-align: center;
+			line-height: 50px;
+			border-radius: 50%;
+			pointer-events: none;
+		}
+
 
     </style>
 </head>
@@ -195,34 +246,76 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 
     <!-- Main Content -->
     <div class="main-content" id="main-content">
-        <h1>Image Gallery - <?= basename($currentFolder) ?></h1>
+        <h1>      Gallery - <?= basename($currentFolder) ?></h1>
         <!-- output for uploading ENABLE FOR DEBUGING
     		<div id="logOutput" style="border: 1px solid #ccc; padding: 10px; max-height: 150px; overflow-y: auto;"></div>
     	-->	
+
         <div class="gallery" id="gallery">
-            <?php foreach ($initialImages as $image): ?>
-                <?php if ($image['thumbnail']): ?>
-                    <img src="<?= htmlspecialchars($image['thumbnail']) ?>" 
-                         data-original="<?= htmlspecialchars($image['original']) ?>" 
-                         onclick="openFullscreen(this)">
-                <?php endif; ?>
-            <?php endforeach; ?>
-        </div>
+			<?php foreach ($initialImages as $media): ?>
+				<?php if ($media['thumbnail']): ?>	
+					<?php if (strpos($media['original'], '.mp4') !== false): ?>
+  						<!-- Video Thumbnail -->
+						<div class="video-thumbnail" onclick="playVideo('<?= htmlspecialchars($media['original']) ?>')">
+							<img src="<?= htmlspecialchars($media['thumbnail']) ?>" onerror="this.style.display='none';">
+							<div class="play-icon">▶</div>
+						</div>
+					<?php else: ?>
+						<!-- Image Thumbnail -->
+						<img src="<?= htmlspecialchars($media['thumbnail']) ?>" 
+							 data-original="<?= htmlspecialchars($media['original']) ?>" 
+							 onclick="openFullscreen(this)">
+					<?php endif; ?>
+				<?php endif; ?>
+			<?php endforeach; ?>
+		</div>
+
+        
+        
         <div class="loading" id="loading">Loading more images...</div>
     </div>
 
-    <!-- Fullscreen View -->
+    <!-- Fullscreen Views -->
     <div class="fullscreen-container" id="fullscreen">
 		<button class="delete-btn" onclick="deleteImage()">🗑 Delete</button>
         <img id="full-image">
         <button class="close-btn" onclick="closeFullscreen()">X</button>
     </div>
+    
+    <div class="fullscreen-container" id="fullscreen-video">
+		<video id="video-player" controls>
+			<source id="video-source" src="" type="video/mp4">
+			Your browser does not support the video tag.
+		</video>
+		<button class="close-btn" onclick="closeVideo()">X</button>
+	</div>
+
 
 <script>
+	    function playVideo(videoSrc) {
+			let videoPlayer = document.getElementById('video-player');
+			let fullscreenVideo = document.getElementById('fullscreen-video');
+
+			if (!videoPlayer || !fullscreenVideo) {
+				console.error("Error: Video elements not found.");
+				return;
+			}
+
+			document.getElementById('video-source').src = videoSrc;
+			videoPlayer.load();
+			fullscreenVideo.style.display = "flex";
+		}
+
+		function closeVideo() {
+			let fullscreenVideo = document.getElementById('fullscreen-video');
+			fullscreenVideo.style.display = "none";
+		}
+
+ 
+	    
 	    let images = Array.from(document.querySelectorAll('.gallery img'));
         let currentIndex = 0;
 
-		////
 		
         function uploadPicture() {
 			let formData = new FormData(document.getElementById('uploadForm'));
@@ -265,7 +358,6 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 
         setInterval(fetchServerLogs, 5000); // Update logs every 5 seconds
         
-        /////
 		
 		function toggleAccordion(year) {
             let months = document.getElementById("months-" + year);
@@ -278,20 +370,33 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
             sidebar.classList.toggle("hidden");
             mainContent.classList.toggle("expanded");
         }
+		function openFullscreen(imageElement) {
+			let fullImage = document.getElementById('full-image');
+			let fullscreenContainer = document.getElementById('fullscreen');
 
-        function openFullscreen(imageElement) {
-            let fullImage = document.getElementById('full-image');
-            let fullscreenContainer = document.getElementById('fullscreen');
+			if (!fullImage || !fullscreenContainer) {
+				console.error("Error: Fullscreen elements not found.");
+				return;
+			}
 
-            if (!fullImage || !fullscreenContainer) {
-                console.error("Error: Fullscreen elements not found.");
-                return;
-            }
+			fullImage.src = ''; // Reset previous image
+			fullscreenContainer.style.display = "flex";
+			fullscreenContainer.classList.add("show");
 
-            fullImage.src = imageElement.getAttribute("data-original");
-            fullscreenContainer.classList.add("show");
-            fullscreenContainer.style.display = "flex";
-        }
+			// First show the thumbnail with low opacity
+			fullImage.style.opacity = "0.2"; 
+			let originalSrc = imageElement.getAttribute("data-original");
+
+			setTimeout(() => {
+				fullImage.src = originalSrc;
+
+				// Use `requestAnimationFrame` for better mobile rendering
+				requestAnimationFrame(() => {
+					fullImage.style.opacity = "1";
+				});
+			}, 200);
+		}
+
 
         function closeFullscreen() {
             let fullscreenContainer = document.getElementById('fullscreen');
