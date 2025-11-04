@@ -2,6 +2,7 @@
 $mainFolder = realpath('images');
 $imagesPerLoad = 40;
 $deletedImages = []; // Store deleted images temporarily for undo functionality
+// please add server path inside "deleteImage" function
 
 // Function to fetch images from a folder
 
@@ -21,6 +22,7 @@ function getImagesFromFolder($folder, $offset = 0, $limit = 40) {
 
     $files = array_slice($files, $offset, $limit);
 
+/*
     foreach ($files as $file) {
         $filePath = realpath($folder . DIRECTORY_SEPARATOR . $file);
         $thumbPath = $thumbFolder . DIRECTORY_SEPARATOR . basename($file);
@@ -30,6 +32,30 @@ function getImagesFromFolder($folder, $offset = 0, $limit = 40) {
             'thumbnail' => file_exists($thumbPath) ? str_replace(realpath('images'), '/images', $thumbPath) : null
         ];
     }
+*/
+//added 04/11/2025
+	foreach ($files as $file) {
+		$filePath = realpath($folder . DIRECTORY_SEPARATOR . $file);
+
+		// If it's a video, assume thumbnail is .jpg
+		if (preg_match('/\.mp4$/i', $file)) {
+			$thumbName = preg_replace('/\.mp4$/i', '.jpg', basename($file));
+		} else {
+			$thumbName = basename($file);
+		}
+
+		$thumbPath = $thumbFolder . DIRECTORY_SEPARATOR . $thumbName;
+		
+		if (!file_exists($thumbPath)) {
+			writeLog("Missing thumbnail for: $file (expected: $thumbPath)");
+		}
+
+
+		$images[] = [
+			'original' => file_exists($filePath) ? str_replace(realpath('images'), '/images', $filePath) : null,
+			'thumbnail' => file_exists($thumbPath) ? str_replace(realpath('images'), '/images', $thumbPath) : null
+		];
+	}
 
 
     return $images;
@@ -165,13 +191,22 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
         .fullscreen-container.show { opacity: 1; }
 				
 		.fullscreen-container img {
-			max-width: 90vw;
-			max-height: 90vh;
+			max-width: 100%;
+			height: auto;
+			object-fit: cover;
+			//max-width: 90vw;
+			//max-height: 90vh;
 			opacity: 0;
 			transition: opacity 0.5s ease-in-out;
 			will-change: opacity; /* Optimized for mobile smooth rendering */
 		}
 
+		@media (min-width: 1024px) {
+			.fullscreen-container img {
+				width: 500px; /* Adjust based on preference */
+				height: auto;
+			}
+		}
 
 
         .close-btn, .delete-btn, .undo-btn { position: absolute; font-size: 18px; padding: 10px; cursor: pointer; border: none; border-radius: 5px; }
@@ -201,6 +236,10 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 			border-radius: 5px;
 			cursor: pointer;
 		}
+		#fullscreen-video {
+			transition: opacity 0.5s ease-in-out;
+		}
+
 
 		.play-icon {
 			position: absolute;
@@ -228,6 +267,7 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 		<form id="uploadForm" enctype="multipart/form-data">
 			<input type="file" name="image" id="imageInput">
 			<button type="button" onclick="uploadPicture()">Upload Picture</button>
+			<a href="index_menu.php" class="button">MENU</a>
 		</form>
 
         <a href="?folder=<?= urlencode($mainFolder) ?>">All Years</a>
@@ -244,7 +284,7 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
     </div>
 
     <!-- Toggle Sidebar Button -->
-    <button class="toggle-sidebar" onclick="toggleSidebar()">☰ Menu</button>
+    <button class="toggle-sidebar" onclick="toggleSidebar()">☰ FOLDERS</button>
 
     <!-- Main Content -->
     <div class="main-content" id="main-content">
@@ -306,14 +346,30 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 			document.getElementById('video-source').src = videoSrc;
 			videoPlayer.load();
 			fullscreenVideo.style.display = "flex";
+			fullscreenVideo.classList.add("show"); // Add fade-in
+			fullscreenVideo.style.opacity = "1";   // Ensure visibility
 		}
-
+/*
 		function closeVideo() {
 			let fullscreenVideo = document.getElementById('fullscreen-video');
 			fullscreenVideo.style.display = "none";
 		}
+*/
+// modified 04/11/2025
+		function closeVideo() {
+			let fullscreenVideo = document.getElementById('fullscreen-video');
+			let videoPlayer = document.getElementById('video-player');
 
- 
+			if (videoPlayer) {
+				videoPlayer.pause();       // Stop playback
+				videoPlayer.currentTime = 0; // Optional: reset to beginning
+			}
+
+			fullscreenVideo.classList.remove("show");
+			setTimeout(() => { fullscreenVideo.style.display = "none"; }, 500);
+		}
+
+
 	    
 	    let images = Array.from(document.querySelectorAll('.gallery img'));
         let currentIndex = 0;
@@ -411,65 +467,6 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 		}
 
 
-/*
-		function openFullscreen(imageElement) {
-			let fullImage = document.getElementById('full-image');
-			let fullscreenContainer = document.getElementById('fullscreen');
-
-			if (!fullImage || !fullscreenContainer) {
-				console.error("Error: Fullscreen elements not found.");
-				return;
-			}
-			// Reset previous image and hide it before loading new one
-			fullImage.src = '';
-			fullImage.style.opacity = "0"; 
-			fullscreenContainer.style.display = "flex";
-			fullscreenContainer.classList.add("show");
-
-			// Show thumbnail first with full opacity
-			let thumbnailSrc = imageElement.src;
-			let originalSrc = imageElement.getAttribute("data-original");
-
-			fullImage.src = thumbnailSrc; // Set thumbnail first
-			fullImage.style.opacity = "1"; // Ensure the thumbnail is visible
-
-			// Fade-in effect after original image loads
-			fullImage.onload = () => {
-				setTimeout(() => {
-					fullImage.style.transition = "opacity 0.5s ease-in-out";
-					fullImage.src = originalSrc; // Replace with full image
-				}, 100); // Slight delay to smooth transition
-			};
-		}
-*/
-/*
-		function openFullscreen(imageElement) {
-			let fullImage = document.getElementById('full-image');
-			let fullscreenContainer = document.getElementById('fullscreen');
-
-			if (!fullImage || !fullscreenContainer) {
-				console.error("Error: Fullscreen elements not found.");
-				return;
-			}
-
-			// Reset previous image and hide it before loading new one
-			fullImage.src = '';
-			fullImage.style.opacity = "0"; 
-			fullscreenContainer.style.display = "flex";
-			fullscreenContainer.classList.add("show");
-
-			let originalSrc = imageElement.getAttribute("data-original");
-
-			// Load the new image and trigger fade effect on load
-			fullImage.onload = () => {
-				fullImage.style.transition = "opacity 0.5s ease-in-out";
-				fullImage.style.opacity = "1";
-			};
-			
-			fullImage.src = originalSrc; // Assign source AFTER setting onload handler
-		}
-
-*/
         function closeFullscreen() {
             let fullscreenContainer = document.getElementById('fullscreen');
             fullscreenContainer.classList.remove("show");
@@ -504,32 +501,7 @@ $initialImages = getImagesFromFolder($currentFolder, 0, $imagesPerLoad);
 				})
 				.catch(error => console.error("Error loading images:", error));
 		}
-
-/*
-        function loadMoreImages() {
-			document.getElementById("loading").style.display = "block";
-
-			fetch(`load_images.php?folder=${encodeURIComponent(folder)}&offset=${offset}`)
-				.then(response => response.json())
-				.then(data => {
-					let gallery = document.getElementById("gallery");
-
-					data.forEach(image => {
-						if (image.thumbnail) {
-							let img = document.createElement("img");
-							img.src = image.thumbnail;
-							img.setAttribute("data-original", image.original);
-							img.onclick = () => openFullscreen(img);
-							gallery.appendChild(img);
-						}
-					});
-
-					offset += <?= $imagesPerLoad ?>;
-					document.getElementById("loading").style.display = "none";
-				})
-				.catch(error => console.error("Error loading images:", error));
-		}
-*/				
+				
 		function deleteImage() {
 			let fullImageElement = document.getElementById('full-image');
 
