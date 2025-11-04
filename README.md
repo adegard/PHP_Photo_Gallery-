@@ -1,4 +1,4 @@
-# PHP_Photo_Gallery - Still in WORK IN PROGRESS -
+# PHP_Photo_Gallery 
 
 Basic photo gallery for Home server - no database
 
