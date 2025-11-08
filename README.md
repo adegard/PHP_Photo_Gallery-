@@ -35,6 +35,14 @@ Add:
 
 `0 2 * * * php /var/www/generate_thumbnails.php >> /var/www/log.txt 2>&1`
 
+
+## [OPTIONAL] Optimize the picture sizes:
+
+launch this script inside the root picture folder:
+
+`find /var/www/images/2003 -type f -iname "*.jpg" -exec jpegoptim --max=95 --strip-all {} \;`
+
+
 ## Common issues:
 
 Verify your server has write permissions to photos folders
