@@ -41,7 +41,8 @@ Add:
 
 launch this script inside the root picture folder:
 
-`find /var/www/images/2003 -type f -iname "*.jpg" -exec jpegoptim --max=95 --strip-all {} \;`
+`sudo apt install jpegoptim
+find /path/to/pictures -type f -iname "*.jpg" -exec jpegoptim --max=95 --strip-all {} \;`
 
 
 ## Common issues:
