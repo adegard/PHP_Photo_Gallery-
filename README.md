@@ -1,12 +1,13 @@
 # PHP_Photo_Gallery 
 
-Basic photo gallery for Home server - no database
+Basic photo/video gallery for Home server - no database
 
 - Gallery visualization script (handles displaying images and browsing). 
 - Cron job script (runs nightly to generate thumbnails). 
 - Supports two-level folder scanning (images/YYYY/MM). 
 - Optimized performance, usability, and smooth navigation, thanks to progressive Thumbnails loading when scroll down
 - Responsive to be use on small screens
+- Open Video thumbnail and play video in full screen 
 
 ![Screenshot](screen.jpg?raw=true "Screenshot")
 
